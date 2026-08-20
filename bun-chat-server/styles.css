@@ -32,6 +32,15 @@
     --action: var(--cupcake-rose);
   }
 
+  @media (forced-colors: active) {
+    --background: Canvas;
+    --foreground-primary: CanvasText;
+    --foreground-secondary: CanvasText;
+    --foreground-tertiary: GrayText;
+    --accent: Highlight;
+    --action: ButtonFace;
+  }
+
   accent-color: var(--accent);
 
   /* Border Radius  */
@@ -135,3 +144,44 @@ button {
   border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
+
+@media (forced-colors: active) {
+  #messages {
+    border-color: CanvasText;
+  }
+
+  .message.user.self {
+    border: 2px solid Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .message.user.other {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .message.system {
+    color: GrayText;
+  }
+
+  input {
+    border: 1px solid CanvasText;
+    background: Field;
+    color: FieldText;
+  }
+
+  button {
+    border: 1px solid ButtonBorder;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
