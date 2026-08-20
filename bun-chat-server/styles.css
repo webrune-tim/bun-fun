@@ -37,6 +37,7 @@
     --foreground-primary: CanvasText;
     --foreground-secondary: CanvasText;
     --foreground-tertiary: GrayText;
+
     --accent: Highlight;
     --action: ButtonFace;
   }
@@ -184,4 +185,3 @@ button {
     outline-offset: 2px;
   }
 }
-
