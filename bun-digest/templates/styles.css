@@ -57,25 +57,48 @@
     --text: light-dark(var(--text-light), var(--text-dark));
     --text-muted: light-dark(var(--text-muted-light), var(--text-muted-dark));
     --border: light-dark(var(--border-light), var(--border-dark));
-    --border-subtle: light-dark(var(--border-subtle-light), var(--border-subtle-dark));
+    --border-subtle: light-dark(
+      var(--border-subtle-light),
+      var(--border-subtle-dark)
+    );
     --accent: light-dark(var(--accent-light), var(--accent-dark));
-    --accent-hover: light-dark(var(--accent-hover-light), var(--accent-hover-dark));
-    --accent-contrast: light-dark(var(--accent-contrast-light), var(--accent-contrast-dark));
+    --accent-hover: light-dark(
+      var(--accent-hover-light),
+      var(--accent-hover-dark)
+    );
+    --accent-contrast: light-dark(
+      var(--accent-contrast-light),
+      var(--accent-contrast-dark)
+    );
     --focus-ring: light-dark(var(--accent-light), var(--accent-dark));
 
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --gap: clamp(1.125rem, 1.0739rem + 0.2273vw, 1.25rem);
+
+    font-family:
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
     line-height: 1.6;
   }
 
   body {
-    max-width: 720px;
+    max-width: 1000px;
     margin: 2rem auto;
     padding: 0 1rem;
     background-color: var(--bg);
     color: var(--text);
   }
 
-  h1, h2 {
+  header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  h1,
+  h2 {
     margin-bottom: 0.75rem;
     color: var(--text);
   }
@@ -179,6 +202,12 @@
   li {
     margin-bottom: 0.5rem;
   }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: var(--gap);
+  }
 }
 
 /* --------------------------------------------------
@@ -216,4 +245,3 @@
     border-top: 1px solid var(--border-subtle);
   }
 }
-
