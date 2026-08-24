@@ -12,8 +12,10 @@
 
   body,
   h1,
+  h2,
   ul,
-  li {
+  li,
+  p {
     margin: 0;
   }
 
@@ -29,24 +31,40 @@
   :root {
     color-scheme: light dark;
 
-    /* Palette Primitives */
-    --black: #212121;
-    --white: #efefef;
-    --grey-light: #a8a8a8;
-    --grey-dark: #6c6c6c;
-    --surface-light: #f6f8fa;
-    --surface-dark: #1b1b1b;
+    /* Palette Primitives (WCAG AAA Compliant) */
+    --bg-light: #ffffff;
+    --bg-dark: #121212;
+    --surface-light: #f5f6f8;
+    --surface-dark: #1e1e24;
+    --text-light: #18181b;
+    --text-dark: #f4f4f5;
+    --text-muted-light: #424750;
+    --text-muted-dark: #c4c8d0;
+    --border-light: #71717a;
+    --border-dark: #8e8e93;
+    --border-subtle-light: #e4e4e7;
+    --border-subtle-dark: #27272a;
+    --accent-light: #5b21b6;
+    --accent-dark: #caa4ff;
+    --accent-hover-light: #4c1d95;
+    --accent-hover-dark: #dec7ff;
+    --accent-contrast-light: #ffffff;
+    --accent-contrast-dark: #0f081d;
 
     /* Semantic Tokens */
-    --bg: light-dark(var(--white), var(--black));
+    --bg: light-dark(var(--bg-light), var(--bg-dark));
     --surface: light-dark(var(--surface-light), var(--surface-dark));
-    --text: light-dark(var(--black), var(--white));
-    --text-muted: light-dark(var(--grey-dark), var(--grey-light));
-    --border: light-dark(#e0e0e0, #333333);
-    --accent: rgb(144, 0, 222);
+    --text: light-dark(var(--text-light), var(--text-dark));
+    --text-muted: light-dark(var(--text-muted-light), var(--text-muted-dark));
+    --border: light-dark(var(--border-light), var(--border-dark));
+    --border-subtle: light-dark(var(--border-subtle-light), var(--border-subtle-dark));
+    --accent: light-dark(var(--accent-light), var(--accent-dark));
+    --accent-hover: light-dark(var(--accent-hover-light), var(--accent-hover-dark));
+    --accent-contrast: light-dark(var(--accent-contrast-light), var(--accent-contrast-dark));
+    --focus-ring: light-dark(var(--accent-light), var(--accent-dark));
 
-    font-family: system-ui, sans-serif;
-    line-height: 1.5;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
   }
 
   body {
@@ -57,20 +75,38 @@
     color: var(--text);
   }
 
+  h1, h2 {
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+
+  p {
+    margin-bottom: 1rem;
+  }
+
   /* Links & Dividers */
   a {
     color: var(--accent);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
 
   a:hover {
-    text-decoration: underline;
+    color: var(--accent-hover);
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
   }
 
   hr {
     margin: 2rem 0;
     border: none;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-subtle);
   }
 
   /* Form Controls */
@@ -81,10 +117,16 @@
     padding: 0.5rem;
     font-family: inherit;
     font-size: 1rem;
-    color: inherit;
-    background-color: transparent;
+    color: var(--text);
+    background-color: var(--surface);
     border: 1px solid var(--border);
     border-radius: 4px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
   }
 
   textarea {
@@ -97,11 +139,16 @@
     padding: 0.6rem 1.2rem;
     cursor: pointer;
     font-size: 1rem;
+    font-weight: 600;
     border-radius: 4px;
     border: none;
     background-color: var(--accent);
-    color: #fff; /* Fallback for browsers without CSS Color 5 support */
-    color: contrast-color(var(--accent));
+    color: var(--accent-contrast);
+    transition: opacity 0.15s ease-in-out;
+  }
+
+  button:hover {
+    opacity: 0.92;
   }
 
   /* Code & Syntax */
@@ -110,7 +157,8 @@
     padding: 1rem;
     border-radius: 6px;
     overflow-x: auto;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-subtle);
+    color: var(--text);
   }
 
   code {
@@ -140,7 +188,7 @@
   header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   h1 {
@@ -155,7 +203,7 @@
   }
 
   .relative-date {
-    opacity: 0.8;
+    font-style: normal;
   }
 
   .content {
@@ -165,6 +213,7 @@
   nav {
     margin-top: 3rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--border-subtle);
   }
 }
+

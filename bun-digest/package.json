@@ -3,6 +3,12 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts",
+    "test": "bun test",
+    "test:e2e": "bun test webview.test.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
