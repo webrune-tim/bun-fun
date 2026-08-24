@@ -207,6 +207,10 @@
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: var(--gap);
+
+    @media (max-width: 1000px) {
+      grid-template-columns: 1fr;
+    }
   }
 }
 
@@ -239,9 +243,118 @@
     margin-top: 1.5rem;
   }
 
-  nav {
+  .post-nav {
     margin-top: 3rem;
-    padding-top: 1rem;
+    padding-top: 1.5rem;
     border-top: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .post-nav-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .post-nav-links {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .nav-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1.25rem;
+    background-color: var(--surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    text-decoration: none;
+    transition:
+      transform 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+    color: var(--text);
+  }
+
+  .nav-card:hover:not(.disabled) {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .nav-card.nav-prev {
+    text-align: left;
+  }
+
+  .nav-card.nav-next {
+    text-align: right;
+  }
+
+  .nav-card-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .nav-card.nav-next .nav-card-label {
+    justify-content: flex-end;
+  }
+
+  .nav-card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-style: dashed;
+  }
+
+  .nav-card.disabled .nav-card-title {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .nav-keyboard-hint {
+    display: inline-block;
+    padding: 0.1em 0.35em;
+    font-size: 0.7rem;
+    font-family: monospace;
+    background: var(--bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-weight: normal;
+  }
+
+  .post-nav-home {
+    text-align: center;
+  }
+
+  .nav-home-link {
+    display: inline-block;
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-size: 0.95rem;
+    transition: color 0.15s ease;
+  }
+
+  .nav-home-link:hover {
+    color: var(--accent-hover);
   }
 }

@@ -42,11 +42,11 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
 
     await view.navigate(baseUrl);
 
-    expect(view.title).toBe("Bun 1.4 Native Server");
+    expect(view.title).toBe("Bun Digest");
     expect(view.url).toBe(`${baseUrl}/`);
 
     const headerText = await view.evaluate("document.querySelector('h1').textContent");
-    expect(headerText).toBe("Bun 1.4 Content Service");
+    expect(headerText).toBe("Bun Digest");
 
     const formExists = await view.evaluate("Boolean(document.getElementById('postForm'))");
     expect(formExists).toBe(true);
@@ -226,5 +226,85 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     const captured = logs.find((l) => l.args.includes("Hello from test page"));
     expect(captured).toBeDefined();
     expect(captured?.type).toBe("log");
+  });
+
+  it("handles smart next and previous buttons with multiple articles and keyboard navigation", async () => {
+    // Add two more articles via the API to have a total of 3 articles:
+    // 1. bun-webview-automation (oldest)
+    // 2. bun-fast-bundler (middle)
+    // 3. bun-zero-config-test (newest)
+    await fetch(`${baseUrl}/api/articles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug: "bun-fast-bundler",
+        title: "Bun Fast Bundler",
+        markdown: "# Fast Bundler\n\nBundling at the speed of native code.",
+      }),
+    });
+
+    await fetch(`${baseUrl}/api/articles`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug: "bun-zero-config-test",
+        title: "Bun Zero-Config Test",
+        markdown: "# Zero Config Test Runner\n\nFast built-in test runner.",
+      }),
+    });
+
+    await using view = new Bun.WebView({ width: 1024, height: 768 });
+
+    // Navigate to the newest article (bun-zero-config-test)
+    await view.navigate(`${baseUrl}/articles/bun-zero-config-test`);
+    expect(view.url).toBe(`${baseUrl}/articles/bun-zero-config-test`);
+
+    // In the newest article, "Next" should be disabled and "Previous" should link to bun-fast-bundler
+    const nextDisabled = await view.evaluate(
+      "Boolean(document.querySelector('.nav-card.nav-next.disabled'))"
+    );
+    expect(nextDisabled).toBe(true);
+
+    const prevTitle = await view.evaluate(
+      "document.querySelector('a.nav-card.nav-prev .nav-card-title')?.textContent?.trim()"
+    );
+    expect(prevTitle).toBe("Bun Fast Bundler");
+
+    const hasPrevLink = await view.evaluate(
+      "Boolean(document.querySelector('link[rel=\"prev\"]'))"
+    );
+    expect(hasPrevLink).toBe(true);
+
+    // Click previous post button to navigate to middle article
+    await view.click("a.nav-card.nav-prev");
+    await waitForUrl(view, (url) => url.includes("/articles/bun-fast-bundler"));
+    expect(view.url).toBe(`${baseUrl}/articles/bun-fast-bundler`);
+
+    // In middle article, both previous and next should be active links
+    const middlePrevTitle = await view.evaluate(
+      "document.querySelector('a.nav-card.nav-prev .nav-card-title')?.textContent?.trim()"
+    );
+    expect(middlePrevTitle).toBe("Mastering Bun.WebView Automation");
+
+    const middleNextTitle = await view.evaluate(
+      "document.querySelector('a.nav-card.nav-next .nav-card-title')?.textContent?.trim()"
+    );
+    expect(middleNextTitle).toBe("Bun Zero-Config Test");
+
+    // Test keyboard navigation: press ArrowLeft to go to the oldest article
+    await view.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))");
+    await waitForUrl(view, (url) => url.includes("/articles/bun-webview-automation"));
+    expect(view.url).toBe(`${baseUrl}/articles/bun-webview-automation`);
+
+    // In oldest article, Previous is disabled and Next links to middle article
+    const prevIsDisabledOnOldest = await view.evaluate(
+      "Boolean(document.querySelector('.nav-card.nav-prev.disabled'))"
+    );
+    expect(prevIsDisabledOnOldest).toBe(true);
+
+    // Test keyboard navigation: press ArrowRight to go back to middle article
+    await view.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))");
+    await waitForUrl(view, (url) => url.includes("/articles/bun-fast-bundler"));
+    expect(view.url).toBe(`${baseUrl}/articles/bun-fast-bundler`);
   });
 });

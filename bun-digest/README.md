@@ -1,12 +1,19 @@
 # bun-digest
 
-A high-performance blog engine built natively with **Bun 1.4**, featuring embedded SQLite, native Markdown compilation (`Bun.markdown`), native JSON5 config, Temporal date formatting, and built-in headless browser automation testing using **`Bun.WebView`**.
+A high-performance blog engine built natively with **Bun 1.4**, featuring **Turso / LibSQL** cloud database support (with local/in-memory SQLite fallback), native Markdown compilation (`Bun.markdown`), native JSON5 config, Temporal date formatting, and built-in headless browser automation testing using **`Bun.WebView`**.
 
 ## Getting Started
 
 ### Install Dependencies
 ```bash
 bun install
+```
+
+### Environment Variables (Turso)
+Create a `.env` file (see `.env.example`):
+```env
+TURSO_URL=libsql://bun-digest-tithos.aws-us-west-2.turso.io
+TURSO_AUTH_TOKEN=your_token_here
 ```
 
 ### Run Server
@@ -16,9 +23,13 @@ bun run start
 
 # Development mode with hot reloading
 bun run dev
+
+# Seed Turso database from local content.db
+bun run seed
 ```
 
 The server listens on `http://localhost:5173`.
+
 
 ---
 

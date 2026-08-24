@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="/styles.css">
+  {{HEAD_LINKS}}
   <title>{{TITLE}}</title>
 </head>
 <body>
@@ -19,8 +20,29 @@
     {{HTML_CONTENT}}
   </article>
 
-  <nav>
-    <a href="/">&larr; Back to Home</a>
+  <nav class="post-nav" aria-label="Post navigation">
+    <div class="post-nav-links">
+      {{PREV_POST}}
+      {{NEXT_POST}}
+    </div>
+    <div class="post-nav-home">
+      <a href="/" class="nav-home-link">&larr; Back to Home</a>
+    </div>
   </nav>
+
+  <script>
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable) {
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'j') {
+        const prev = document.querySelector('a.nav-card.nav-prev');
+        if (prev && prev.href) prev.click();
+      } else if (e.key === 'ArrowRight' || e.key === 'k') {
+        const next = document.querySelector('a.nav-card.nav-next');
+        if (next && next.href) next.click();
+      }
+    });
+  </script>
 </body>
 </html>
