@@ -57,9 +57,9 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(emptyNotice).toBe("No articles published yet.");
 
     // Verify CSS styles are loaded
-    const bodyFont = await view.evaluate(
+    const bodyFont = (await view.evaluate(
       "window.getComputedStyle(document.body).fontFamily"
-    );
+    )) as string;
     expect(typeof bodyFont).toBe("string");
     expect(bodyFont.length).toBeGreaterThan(0);
   });
@@ -169,11 +169,11 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     await view.navigate(`${baseUrl}/articles/bun-webview-automation`);
     expect(view.url).toBe(`${baseUrl}/articles/bun-webview-automation`);
 
-    await view.goBack();
+    await (view as any).goBack();
     await waitForUrl(view, (url) => url === `${baseUrl}/`);
     expect(view.url).toBe(`${baseUrl}/`);
 
-    await view.goForward();
+    await (view as any).goForward();
     await waitForUrl(view, (url) => url === `${baseUrl}/articles/bun-webview-automation`);
     expect(view.url).toBe(`${baseUrl}/articles/bun-webview-automation`);
   });

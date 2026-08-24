@@ -11,7 +11,7 @@ describe("Bun 1.4 Native Capabilities", () => {
         version: 1.4,
       }
     `;
-    const parsed = Bun.JSON5.parse(raw);
+    const parsed = Bun.JSON5.parse(raw) as { runtime: string; version: number };
     expect(parsed.runtime).toBe("Bun");
     expect(parsed.version).toBe(1.4);
   });
@@ -36,7 +36,7 @@ describe("Bun 1.4 Native Capabilities", () => {
 
     const result = await client.execute("SELECT 1 as is_connected;");
     expect(result.rows.length).toBe(1);
-    expect(result.rows[0].is_connected).toBe(1);
+    expect(result.rows[0]?.is_connected).toBe(1);
     client.close();
   });
 });
