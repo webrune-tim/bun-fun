@@ -1,0 +1,170 @@
+@layer reset, base, home, blog;
+
+/* --------------------------------------------------
+ * Layer 1: Reset
+ * -------------------------------------------------- */
+@layer reset {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body,
+  h1,
+  ul,
+  li {
+    margin: 0;
+  }
+
+  ul {
+    padding: 0;
+  }
+}
+
+/* --------------------------------------------------
+ * Layer 2: Base System Defaults & Design Tokens
+ * -------------------------------------------------- */
+@layer base {
+  :root {
+    color-scheme: light dark;
+
+    /* Palette Primitives */
+    --black: #212121;
+    --white: #efefef;
+    --grey-light: #a8a8a8;
+    --grey-dark: #6c6c6c;
+    --surface-light: #f6f8fa;
+    --surface-dark: #1b1b1b;
+
+    /* Semantic Tokens */
+    --bg: light-dark(var(--white), var(--black));
+    --surface: light-dark(var(--surface-light), var(--surface-dark));
+    --text: light-dark(var(--black), var(--white));
+    --text-muted: light-dark(var(--grey-dark), var(--grey-light));
+    --border: light-dark(#e0e0e0, #333333);
+    --accent: rgb(144, 0, 222);
+
+    font-family: system-ui, sans-serif;
+    line-height: 1.5;
+  }
+
+  body {
+    max-width: 720px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  /* Links & Dividers */
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  hr {
+    margin: 2rem 0;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Form Controls */
+  textarea,
+  input {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    font-family: inherit;
+    font-size: 1rem;
+    color: inherit;
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  textarea {
+    height: 140px;
+    font-family: monospace;
+    resize: vertical;
+  }
+
+  button {
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: none;
+    background-color: var(--accent);
+    color: #fff; /* Fallback for browsers without CSS Color 5 support */
+    color: contrast-color(var(--accent));
+  }
+
+  /* Code & Syntax */
+  pre {
+    background-color: var(--surface);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+
+  code {
+    font-family: monospace;
+    font-size: 0.9em;
+  }
+}
+
+/* --------------------------------------------------
+ * Layer 3: Home View Specifics
+ * -------------------------------------------------- */
+@layer home {
+  ul {
+    padding-left: 1.2rem;
+    list-style-type: disc;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* --------------------------------------------------
+ * Layer 4: Blog Post View Specifics
+ * -------------------------------------------------- */
+@layer blog {
+  header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .meta {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .relative-date {
+    opacity: 0.8;
+  }
+
+  .content {
+    margin-top: 1.5rem;
+  }
+
+  nav {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+}

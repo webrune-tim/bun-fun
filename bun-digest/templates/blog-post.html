@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/styles.css">
+  <title>{{TITLE}}</title>
+</head>
+<body>
+  <header>
+    <h1>{{TITLE}}</h1>
+    <div class="meta">
+      Published on <time datetime="{{ISO_DATE}}">{{FORMATTED_DATE}}</time>
+      <span class="relative-date">({{RELATIVE_DATE}})</span>
+    </div>
+  </header>
+
+  <article class="content">
+    {{HTML_CONTENT}}
+  </article>
+
+  <nav>
+    <a href="/">&larr; Back to Home</a>
+  </nav>
+</body>
+</html>
