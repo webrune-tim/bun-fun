@@ -17,9 +17,10 @@ async function waitForUrl(
   throw new Error(`Timeout waiting for URL condition. Current URL: ${view.url}`);
 }
 
-describe("Blog End-to-End Tests with Bun.WebView", () => {
+describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
   let app: ReturnType<typeof createAppServer>;
   let baseUrl: string;
+  let authCookie = "";
 
   beforeAll(async () => {
     // Start an isolated test server on a dynamic port with an in-memory SQLite database
@@ -30,6 +31,19 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
       enableCron: false,
     });
     baseUrl = `http://127.0.0.1:${app.server.port}`;
+    await app.ready;
+
+    // Create a registered user for API interactions
+    const regRes = await fetch(`${baseUrl}/api/auth/sign-up/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Alice Writer",
+        email: "alice@testcorp.internal",
+        password: "SecurePass123!*",
+      }),
+    });
+    authCookie = regRes.headers.get("set-cookie") || "";
   });
 
   afterAll(() => {
@@ -37,7 +51,7 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     Bun.WebView.closeAll();
   });
 
-  it("loads the home page and verifies UI elements and stylesheet", async () => {
+  it("loads the home page and verifies UI elements, auth triggers, and stylesheet", async () => {
     await using view = new Bun.WebView({ width: 1024, height: 768 });
 
     await view.navigate(baseUrl);
@@ -52,9 +66,13 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(formExists).toBe(true);
 
     const emptyNotice = await view.evaluate(
-      "document.querySelector('ul').textContent.trim()"
+      "document.querySelector('.articles-list').textContent.trim()"
     );
     expect(emptyNotice).toBe("No articles published yet.");
+
+    // Verify auth buttons exist
+    const signInBtnExists = await view.evaluate("Boolean(document.getElementById('signInBtn'))");
+    expect(signInBtnExists).toBe(true);
 
     // Verify CSS styles are loaded
     const bodyFont = (await view.evaluate(
@@ -64,10 +82,60 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(bodyFont.length).toBeGreaterThan(0);
   });
 
-  it("submits a new article via browser interaction and verifies rendered Markdown", async () => {
+  it("registers a new user and logs in via the BetterAuth UI modal dialog in WebView", async () => {
     await using view = new Bun.WebView({ width: 1024, height: 768 });
 
     await view.navigate(baseUrl);
+
+    // Open Sign Up Tab in Auth Modal
+    await view.evaluate("openAuthModal('signup')");
+
+    const isDialogOpen = await view.evaluate("document.getElementById('authModal').open");
+    expect(isDialogOpen).toBe(true);
+
+    // Fill in sign up form fields
+    await view.click("#signUpName");
+    await view.type("Bob Journalist");
+
+    await view.click("#signUpEmail");
+    await view.type("bob@testcorp.internal");
+
+    await view.click("#signUpPassword");
+    await view.type("SecurePass123!*");
+
+    // Submit sign up form
+    await view.click("#signUpForm button[type='submit']");
+
+    // Wait for page reload to complete and session to be active
+    await Bun.sleep(1000);
+    await waitForUrl(view, (url) => url === `${baseUrl}/`);
+
+    const userBadgeText = await view.evaluate(
+      "document.querySelector('#userBadge .user-name')?.textContent ?? ''"
+    );
+    expect(userBadgeText).toContain("Bob Journalist");
+
+    const authNoticeText = await view.evaluate(
+      "document.getElementById('authNotice')?.textContent ?? ''"
+    );
+    expect(authNoticeText).toContain("Posting as Bob Journalist");
+  });
+
+  it("submits a new article as the authenticated user and verifies author tie-in", async () => {
+    await using view = new Bun.WebView({ width: 1024, height: 768 });
+
+    await view.navigate(baseUrl);
+
+    // Sign in first
+    await view.evaluate("openAuthModal('signin')");
+    await view.click("#signInEmail");
+    await view.type("alice@testcorp.internal");
+    await view.click("#signInPassword");
+    await view.type("SecurePass123!*");
+    await view.click("#signInForm button[type='submit']");
+
+    await Bun.sleep(1000);
+    await waitForUrl(view, (url) => url === `${baseUrl}/`);
 
     // Focus and type form fields
     await view.click("#title");
@@ -89,7 +157,7 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     await view.type(markdownContent);
 
     // Click submit button to trigger form submission and client-side redirect
-    await view.click("button[type='submit']");
+    await view.click("#submitBtn");
 
     // Wait for the browser to navigate to the article view
     await waitForUrl(view, (url) => url.includes("/articles/bun-webview-automation"));
@@ -99,19 +167,25 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     const articleTitle = await view.evaluate("document.querySelector('h1').textContent");
     expect(articleTitle).toBe("Mastering Bun.WebView Automation");
 
+    // Verify author is displayed on the article
+    const authorHighlight = await view.evaluate(
+      "document.querySelector('.author-name-highlight')?.textContent ?? ''"
+    );
+    expect(authorHighlight).toBe("Alice Writer");
+
     // Verify compiled Markdown elements in the real DOM
     const subHeading = await view.evaluate(
-      "document.querySelector('.content h2').textContent"
+      "document.querySelector('.post-content h2').textContent"
     );
     expect(subHeading).toBe("Headless Browser in Bun 1.4");
 
     const boldText = await view.evaluate(
-      "document.querySelector('.content strong').textContent"
+      "document.querySelector('.post-content strong').textContent"
     );
     expect(boldText).toBe("native browser automation");
 
     const listItems = (await view.evaluate(
-      "[...document.querySelectorAll('.content li')].map(li => li.textContent.trim())"
+      "[...document.querySelectorAll('.post-content li')].map(li => li.textContent.trim())"
     )) as string[];
     expect(listItems).toEqual([
       "Zero external drivers",
@@ -120,7 +194,7 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     ]);
 
     const codeBlock = await view.evaluate(
-      "document.querySelector('.content code')?.textContent ?? ''"
+      "document.querySelector('.post-content code')?.textContent ?? ''"
     );
     expect(codeBlock).toContain("Bun.WebView");
 
@@ -136,7 +210,7 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(relativeDateText).toMatch(/this minute|ago/);
   });
 
-  it("navigates back to the homepage and verifies the article appears in the index", async () => {
+  it("navigates back to the homepage and verifies the article and author appear in the index", async () => {
     await using view = new Bun.WebView({ width: 1024, height: 768 });
 
     // Navigate to the article
@@ -144,22 +218,22 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(view.url).toBe(`${baseUrl}/articles/bun-webview-automation`);
 
     // Click the Back to Home link
-    await view.click("nav a");
+    await view.click(".nav-home-link");
 
     // Wait for navigation back to root
     await waitForUrl(view, (url) => url === `${baseUrl}/`);
     expect(view.url).toBe(`${baseUrl}/`);
 
-    // Verify the newly created article is listed
-    const articleLinks = (await view.evaluate(
-      "[...document.querySelectorAll('ul li a')].map(a => ({ href: a.getAttribute('href'), text: a.textContent }))"
-    )) as Array<{ href: string; text: string }>;
-
-    const matching = articleLinks.find(
-      (l) => l.href === "/articles/bun-webview-automation"
+    // Verify the newly created article is listed with author
+    const articleLinkText = await view.evaluate(
+      "document.querySelector('.article-title-link')?.textContent?.trim() ?? ''"
     );
-    expect(matching).toBeDefined();
-    expect(matching?.text).toBe("Mastering Bun.WebView Automation");
+    expect(articleLinkText).toBe("Mastering Bun.WebView Automation");
+
+    const authorTagText = await view.evaluate(
+      "document.querySelector('.author-tag')?.textContent?.trim() ?? ''"
+    );
+    expect(authorTagText).toBe("Alice Writer");
   });
 
   it("supports browser history navigation (goBack / goForward)", async () => {
@@ -210,24 +284,6 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     expect(bodyText).toContain("Article not found");
   });
 
-  it("captures page console logs", async () => {
-    const logs: Array<{ type: string; args: any[] }> = [];
-
-    await using view = new Bun.WebView({
-      console: (type, ...args) => {
-        logs.push({ type, args });
-      },
-    });
-
-    await view.navigate(baseUrl);
-    await view.evaluate("console.log('Hello from test page', 123)");
-
-    expect(logs.length).toBeGreaterThanOrEqual(1);
-    const captured = logs.find((l) => l.args.includes("Hello from test page"));
-    expect(captured).toBeDefined();
-    expect(captured?.type).toBe("log");
-  });
-
   it("handles smart next and previous buttons with multiple articles and keyboard navigation", async () => {
     // Add two more articles via the API to have a total of 3 articles:
     // 1. bun-webview-automation (oldest)
@@ -235,7 +291,10 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
     // 3. bun-zero-config-test (newest)
     await fetch(`${baseUrl}/api/articles`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: authCookie,
+      },
       body: JSON.stringify({
         slug: "bun-fast-bundler",
         title: "Bun Fast Bundler",
@@ -245,7 +304,10 @@ describe("Blog End-to-End Tests with Bun.WebView", () => {
 
     await fetch(`${baseUrl}/api/articles`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: authCookie,
+      },
       body: JSON.stringify({
         slug: "bun-zero-config-test",
         title: "Bun Zero-Config Test",

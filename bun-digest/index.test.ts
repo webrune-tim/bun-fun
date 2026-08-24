@@ -41,32 +41,89 @@ describe("Bun 1.4 Native Capabilities", () => {
   });
 });
 
-describe("Vercel Bun Server Runtime", () => {
-  it("handles requests via server.fetch (Vercel Bun framework preset)", async () => {
-    // 1. Post an article
+describe("BetterAuth & User Post Association", () => {
+  it("rejects unauthenticated article publishing with 401", async () => {
     const postReq = new Request("http://localhost/api/articles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        slug: "vercel-bun-preset-test",
-        title: "Deploying with Vercel Bun Preset",
-        markdown: "## Bun Native Preset\n\nUses server.ts and bunVersion.",
+        slug: "unauthorized-post",
+        title: "Unauthorized Post",
+        markdown: "Should not be created without login",
+      }),
+    });
+    const postRes = await server.fetch(postReq);
+    expect(postRes.status).toBe(401);
+    const data = (await postRes.json()) as any;
+    expect(data.error).toContain("Authentication required");
+  });
+
+  it("handles sign up, sign in, and ties published posts to authenticated user", async () => {
+    const testEmail = `tester-${Date.now()}@example.com`;
+    const testPassword = "Password123!*";
+    const testName = "Test Author";
+
+    // 1. Sign Up via BetterAuth API endpoint
+    const signUpReq = new Request("http://localhost/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: testName,
+        email: testEmail,
+        password: testPassword,
+      }),
+    });
+    const signUpRes = await server.fetch(signUpReq);
+    expect(signUpRes.status).toBe(200);
+    const signUpData = (await signUpRes.json()) as any;
+    expect(signUpData.user).toBeDefined();
+    expect(signUpData.user.email).toBe(testEmail);
+
+    // Extract session cookie from sign-up response
+    const setCookie = signUpRes.headers.get("set-cookie");
+    expect(setCookie).toBeDefined();
+
+    // 2. Publish an article with session cookie
+    const postReq = new Request("http://localhost/api/articles", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: setCookie!,
+      },
+      body: JSON.stringify({
+        slug: `user-tied-post-${Date.now()}`,
+        title: "Post Tied To User",
+        markdown: "## Authenticated Author\n\nThis article is tied to an author user.",
       }),
     });
     const postRes = await server.fetch(postReq);
     expect(postRes.status).toBe(201);
     const postData = (await postRes.json()) as any;
-    expect(postData.slug).toBe("vercel-bun-preset-test");
+    expect(postData.success).toBe(true);
+    expect(postData.author.name).toBe(testName);
+    expect(postData.author.email).toBe(testEmail);
 
-    // 2. Fetch the article view
-    const viewReq = new Request("http://localhost/articles/vercel-bun-preset-test");
+    // 3. Fetch article via API and verify author metadata
+    const getReq = new Request(`http://localhost/api/articles/${postData.slug}`);
+    const getRes = await server.fetch(getReq);
+    expect(getRes.status).toBe(200);
+    const articleData = (await getRes.json()) as any;
+    expect(articleData.author_name).toBe(testName);
+    expect(articleData.author_email).toBe(testEmail);
+    expect(articleData.author_id).toBe(signUpData.user.id);
+
+    // 4. Fetch HTML article view and verify author is rendered
+    const viewReq = new Request(`http://localhost/articles/${postData.slug}`);
     const viewRes = await server.fetch(viewReq);
     expect(viewRes.status).toBe(200);
     const html = await viewRes.text();
-    expect(html).toContain("Deploying with Vercel Bun Preset");
-    expect(html).toContain("Uses server.ts and bunVersion.");
+    expect(html).toContain(testName);
+    expect(html).toContain("Published by");
+  });
+});
 
-    // 3. Test Cron route
+describe("Vercel Bun Server Runtime", () => {
+  it("handles cron maintenance route", async () => {
     const cronReq = new Request("http://localhost/api/cron");
     const cronRes = await server.fetch(cronReq);
     expect(cronRes.status).toBe(200);
@@ -91,4 +148,3 @@ describe("Vercel Bun Server Runtime", () => {
     expect(res2.status).toBe(200);
   });
 });
-
