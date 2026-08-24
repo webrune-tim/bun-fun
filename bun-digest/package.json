@@ -6,18 +6,18 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun --watch index.ts",
+    "build": "echo 'Ready for Vercel'",
     "test": "bun test",
     "test:e2e": "bun test webview.test.ts",
     "seed": "bun run seed.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^7"
+    "@types/bun": "latest",
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
-    "@libsql/client": "^0.17.4"
+    "@libsql/client": "^0.17.4",
+    "marked": "^18.0.11"
   }
 }

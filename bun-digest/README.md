@@ -1,6 +1,6 @@
 # bun-digest
 
-A high-performance blog engine built natively with **Bun 1.4**, featuring **Turso / LibSQL** cloud database support (with local/in-memory SQLite fallback), native Markdown compilation (`Bun.markdown`), native JSON5 config, Temporal date formatting, and built-in headless browser automation testing using **`Bun.WebView`**.
+A high-performance blog engine built natively with **Bun 1.4**, featuring **Turso / LibSQL** cloud database support (with local/in-memory SQLite fallback), native Markdown compilation (`Bun.markdown`), native JSON5 config, Temporal date formatting, built-in headless browser automation testing using **`Bun.WebView`**, and native support for **Vercel's Bun Runtime** ([Bun Vercel Deployment Guide](https://bun.sh/guides/deployment/vercel)).
 
 ## Getting Started
 
@@ -30,6 +30,38 @@ bun run seed
 
 The server listens on `http://localhost:5173`.
 
+---
+
+## Deploying to Vercel (Native Bun Runtime)
+
+Following the official [Bun Vercel Deployment Guide](https://bun.sh/guides/deployment/vercel), `bun-digest` uses Vercel's **Bun Framework Preset**:
+
+- `vercel.json` specifies `"bunVersion": "1.4.x"`.
+- `server.ts` provides the single `Bun.serve()` server entrypoint that Vercel routes all requests to.
+- `bun.lock` is included in the repository.
+
+### 1. Set Up Environment Variables on Vercel
+In the Vercel Dashboard (or via `vercel env add`), configure:
+- `TURSO_URL`: `libsql://your-database.turso.io`
+- `TURSO_AUTH_TOKEN`: your Turso auth token
+
+### 2. Deploy via Vercel CLI or Git
+```bash
+# Using bunx (no global install needed)
+bunx vercel login
+bunx vercel deploy
+
+# Deploy to production
+bunx vercel --prod
+```
+
+Or connect the repository in the Vercel Web Dashboard:
+- Vercel automatically detects the Bun Framework Preset via `vercel.json` and `server.ts`.
+
+### 3. Architecture Highlights
+- **Native Bun Runtime**: Runs `Bun.serve()` on Bun 1.4 inside Vercel.
+- **Static Assets**: `public/styles.css` is served directly with Edge CDN caching.
+- **Scheduled Maintenance**: Configured via `vercel.json` crons to invoke `/api/cron` daily (00:00 UTC).
 
 ---
 
@@ -40,7 +72,7 @@ This repository uses Bun 1.4's built-in headless browser automation API ([`Bun.W
 ### Run Tests
 
 ```bash
-# Run all tests (unit and E2E)
+# Run all tests (unit, Vercel Bun runtime, and E2E)
 bun test
 
 # Run only the Bun.WebView E2E test suite
