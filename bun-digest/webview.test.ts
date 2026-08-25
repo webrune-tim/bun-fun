@@ -35,7 +35,7 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
     baseUrl = `http://127.0.0.1:${app.server.port}`;
     await app.ready;
 
-    // Create a registered user for API interactions
+    // Create or sign in user for API interactions
     const regRes = await fetch(`${baseUrl}/api/auth/sign-up/email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,7 +45,19 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
         password: "SecurePass123!*",
       }),
     });
-    authCookie = regRes.headers.get("set-cookie") || "";
+    if (regRes.ok) {
+      authCookie = regRes.headers.get("set-cookie") || "";
+    } else {
+      const loginRes = await fetch(`${baseUrl}/api/auth/sign-in/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "alice@testcorp.internal",
+          password: "SecurePass123!*",
+        }),
+      });
+      authCookie = loginRes.headers.get("set-cookie") || "";
+    }
   });
 
   afterAll(() => {
@@ -144,8 +156,9 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
     await view.click("#title");
     await view.type("Mastering Bun.WebView Automation");
 
+    const dynamicSlug = `bun-webview-${Date.now()}`;
     await view.click("#slug");
-    await view.type("bun-webview-automation");
+    await view.type(dynamicSlug);
 
     await view.click("#markdown");
     const markdownContent =
@@ -163,8 +176,8 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
     await view.click("#submitBtn");
 
     // Wait for the browser to navigate to the article view
-    await waitForUrl(view, (url) => url.includes("/articles/bun-webview-automation"));
-    expect(view.url).toBe(`${baseUrl}/articles/bun-webview-automation`);
+    await waitForUrl(view, (url) => url.includes(`/articles/${dynamicSlug}`));
+    expect(view.url).toBe(`${baseUrl}/articles/${dynamicSlug}`);
 
     // Check rendered page title and header
     const articleTitle = await view.evaluate("document.querySelector('h1').textContent");
