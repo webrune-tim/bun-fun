@@ -3,10 +3,7 @@
   "bunVersion": "1.4.x",
   "cleanUrls": true,
   "functions": {
-    "index.ts": {
-      "includeFiles": "node_modules/@better-auth/**"
-    },
-    "server.ts": {
+    "**": {
       "includeFiles": "node_modules/@better-auth/**"
     }
   },

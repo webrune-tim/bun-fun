@@ -6,7 +6,8 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun --watch index.ts",
-    "build": "echo 'Ready for Vercel'",
+    "postinstall": "bun run patch-better-auth.ts",
+    "build": "bun run patch-better-auth.ts && echo 'Ready for Vercel'",
     "test": "bun test",
     "test:e2e": "bun test webview.test.ts",
     "seed": "bun run seed.ts"

@@ -1,3 +1,13 @@
+import "@better-auth/utils";
+import "@better-auth/utils/password";
+import "@better-auth/utils/random";
+import "@better-auth/utils/base64";
+import "@better-auth/utils/hash";
+import "@better-auth/utils/hex";
+import "@better-auth/utils/binary";
+import "@better-auth/utils/hmac";
+import "@better-auth/utils/otp";
+import "@better-auth/telemetry";
 import { betterAuth } from "better-auth";
 import {
   Kysely,
