@@ -316,6 +316,12 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
     }
   }
 
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL
+    ? "https://bun-digest.vercel.app"
+    : undefined;
+
   const vercelUrl = process.env.VERCEL_URL
     ? process.env.VERCEL_URL.startsWith("http")
       ? process.env.VERCEL_URL
@@ -325,6 +331,7 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
   baseURL =
     baseURL ||
     process.env.BETTER_AUTH_URL ||
+    vercelProductionUrl ||
     vercelUrl ||
     "http://localhost:5173";
 
