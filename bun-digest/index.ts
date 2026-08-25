@@ -1,6 +1,6 @@
-import { createClient, type Client } from "@libsql/client";
+import type { Client } from "@libsql/client/web";
 import { formatArticleDate, parseUtcDate } from "./formatDate.ts";
-import { createAuth, initAuthDatabase, AUTH_DB_DDL } from "./auth.ts";
+import { createAuth, initAuthDatabase, AUTH_DB_DDL, createDbClient } from "./auth.ts";
 import { marked } from "marked";
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -94,7 +94,7 @@ export function createRequestHandler(options: AppServerOptions = {}) {
     process.env.TURSO_TOKEN;
 
   // 1. LibSQL / Turso client setup
-  const db: Client = createClient({
+  const db: Client = createDbClient({
     url,
     authToken:
       url.startsWith("libsql://") || url.startsWith("https://") || url.startsWith("http://")
@@ -105,7 +105,7 @@ export function createRequestHandler(options: AppServerOptions = {}) {
   // 2. BetterAuth setup with shared LibSQL client
   const auth = createAuth({
     client: db,
-    baseURL: options.authBaseURL || process.env.BETTER_AUTH_URL || (options.port ? `http://127.0.0.1:${options.port}` : "http://localhost:5173"),
+    baseURL: options.authBaseURL || process.env.BETTER_AUTH_URL || (options.port ? `http://127.0.0.1:${options.port}` : undefined),
   });
 
   let initDbPromise: Promise<any> | null = null;

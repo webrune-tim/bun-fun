@@ -1,7 +1,107 @@
 import { betterAuth } from "better-auth";
-import { Kysely } from "kysely";
-import { LibsqlDialect } from "@libsql/kysely-libsql";
-import { createClient, type Client } from "@libsql/client";
+import {
+  Kysely,
+  SqliteAdapter,
+  SqliteIntrospector,
+  SqliteQueryCompiler,
+  type Dialect,
+  type Driver,
+  type DatabaseConnection,
+  type CompiledQuery,
+  type QueryResult,
+} from "kysely";
+import { createClient as createWebClient, type Client, type Transaction } from "@libsql/client/web";
+
+export class LibsqlDialect implements Dialect {
+  #config: { client: Client };
+  constructor(config: { client: Client }) {
+    this.#config = config;
+  }
+  createAdapter() {
+    return new SqliteAdapter();
+  }
+  createDriver(): Driver {
+    return new LibsqlDriver(this.#config.client);
+  }
+  createIntrospector(db: Kysely<any>) {
+    return new SqliteIntrospector(db);
+  }
+  createQueryCompiler() {
+    return new SqliteQueryCompiler();
+  }
+}
+
+class LibsqlDriver implements Driver {
+  client: Client;
+  constructor(client: Client) {
+    this.client = client;
+  }
+  async init() {}
+  async acquireConnection(): Promise<DatabaseConnection> {
+    return new LibsqlConnection(this.client);
+  }
+  async beginTransaction(connection: DatabaseConnection) {
+    await (connection as LibsqlConnection).beginTransaction();
+  }
+  async commitTransaction(connection: DatabaseConnection) {
+    await (connection as LibsqlConnection).commitTransaction();
+  }
+  async rollbackTransaction(connection: DatabaseConnection) {
+    await (connection as LibsqlConnection).rollbackTransaction();
+  }
+  async releaseConnection(_conn: DatabaseConnection) {}
+  async destroy() {}
+}
+
+class LibsqlConnection implements DatabaseConnection {
+  client: Client;
+  #transaction?: Transaction;
+  constructor(client: Client) {
+    this.client = client;
+  }
+  async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
+    const target = this.#transaction ?? this.client;
+    const result = await target.execute({
+      sql: compiledQuery.sql,
+      args: compiledQuery.parameters as any[],
+    });
+    return {
+      insertId:
+        result.lastInsertRowid !== undefined
+          ? BigInt(result.lastInsertRowid)
+          : undefined,
+      numAffectedRows: BigInt(result.rowsAffected),
+      rows: result.rows as unknown as R[],
+    };
+  }
+  async beginTransaction() {
+    if (this.#transaction) {
+      throw new Error("Transaction already in progress");
+    }
+    this.#transaction = await this.client.transaction();
+  }
+  async commitTransaction() {
+    if (!this.#transaction) {
+      throw new Error("No transaction to commit");
+    }
+    await this.#transaction.commit();
+    this.#transaction = undefined;
+  }
+  async rollbackTransaction() {
+    if (!this.#transaction) {
+      throw new Error("No transaction to rollback");
+    }
+    await this.#transaction.rollback();
+    this.#transaction = undefined;
+  }
+  async *streamQuery<R>(_compiledQuery: CompiledQuery, _chunkSize?: number): AsyncIterableIterator<QueryResult<R>> {
+    throw new Error("Streaming not supported");
+  }
+}
+
+export function createDbClient(config: { url: string; authToken?: string }): Client {
+  return createWebClient(config);
+}
 
 export interface CreateAuthOptions {
   baseURL?: string;
@@ -78,7 +178,26 @@ export async function initAuthDatabase(client: Client): Promise<void> {
     .filter(Boolean);
 
   for (const sql of statements) {
-    await client.execute(sql);
+    try {
+      await client.execute(sql);
+    } catch (err) {
+      console.warn(`[DDL Statement Notice]:`, err);
+    }
+  }
+
+  // Ensure author columns exist on articles table if table already existed from a previous schema version
+  const columnsToAdd = [
+    { name: "author_id", def: 'TEXT REFERENCES "user"("id") ON DELETE SET NULL' },
+    { name: "author_name", def: "TEXT" },
+    { name: "author_email", def: "TEXT" },
+  ];
+
+  for (const col of columnsToAdd) {
+    try {
+      await client.execute(`ALTER TABLE articles ADD COLUMN ${col.name} ${col.def}`);
+    } catch {
+      // Column already exists, safe to ignore
+    }
   }
 }
 
@@ -105,7 +224,7 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
         process.env.TURSO_AUTH_TOKEN ||
         process.env.TURSO_TOKEN;
 
-      client = createClient({
+      client = createDbClient({
         url,
         authToken:
           url.startsWith("libsql://") || url.startsWith("https://") || url.startsWith("http://")
@@ -115,7 +234,18 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
     }
   }
 
-  baseURL = baseURL || process.env.BETTER_AUTH_URL || "http://localhost:5173";
+  const vercelUrl = process.env.VERCEL_URL
+    ? process.env.VERCEL_URL.startsWith("http")
+      ? process.env.VERCEL_URL
+      : `https://${process.env.VERCEL_URL}`
+    : undefined;
+
+  baseURL =
+    baseURL ||
+    process.env.BETTER_AUTH_URL ||
+    vercelUrl ||
+    "http://localhost:5173";
+
   secret =
     secret ||
     process.env.BETTER_AUTH_SECRET ||
@@ -123,7 +253,7 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
 
   const kyselyDb = new Kysely<any>({
     dialect: new LibsqlDialect({
-      client,
+      client: client as any,
     }),
   });
 
@@ -149,6 +279,12 @@ export function createAuth(clientOrOptions?: Client | CreateAuthOptions) {
     },
     baseURL,
     secret,
+    trustedOrigins: [
+      "https://*.vercel.app",
+      "http://localhost:*",
+      "http://127.0.0.1:*",
+      ...(vercelUrl ? [vercelUrl] : []),
+    ],
     emailAndPassword: {
       enabled: true,
     },
