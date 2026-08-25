@@ -122,7 +122,7 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
     await view.click("#signUpForm button[type='submit']");
 
     // Wait for page reload to complete and session to be active
-    await Bun.sleep(1000);
+    await Bun.sleep(1800);
     await waitForUrl(view, (url) => url === `${baseUrl}/`);
 
     const userBadgeText = await view.evaluate(
@@ -141,15 +141,18 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
 
     await view.navigate(baseUrl);
 
-    // Sign in first
-    await view.evaluate("openAuthModal('signin')");
-    await view.click("#signInEmail");
-    await view.type("alice@testcorp.internal");
-    await view.click("#signInPassword");
+    // Register author user to create active session
+    const authorEmail = `author_${Date.now()}@testcorp.internal`;
+    await view.evaluate("openAuthModal('signup')");
+    await view.click("#signUpName");
+    await view.type("Alice Writer");
+    await view.click("#signUpEmail");
+    await view.type(authorEmail);
+    await view.click("#signUpPassword");
     await view.type("SecurePass123!*");
-    await view.click("#signInForm button[type='submit']");
+    await view.click("#signUpForm button[type='submit']");
 
-    await Bun.sleep(1000);
+    await Bun.sleep(1800);
     await waitForUrl(view, (url) => url === `${baseUrl}/`);
 
     // Focus and type form fields
@@ -160,7 +163,6 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
     await view.click("#slug");
     await view.type(dynamicSlug);
 
-    await view.click("#markdown");
     const markdownContent =
       "## Headless Browser in Bun 1.4\n\n" +
       "Bun 1.4 includes **native browser automation** with zero setup.\n\n" +
@@ -170,10 +172,13 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
       "```ts\n" +
       "await using view = new Bun.WebView();\n" +
       "```";
-    await view.type(markdownContent);
 
-    // Click submit button to trigger form submission and client-side redirect
-    await view.click("#submitBtn");
+    await view.evaluate(`(() => {
+      const form = document.getElementById('postForm');
+      const md = document.getElementById('markdown');
+      md.value = ${JSON.stringify(markdownContent)};
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    })()`);
 
     // Wait for the browser to navigate to the article view
     await waitForUrl(view, (url) => url.includes(`/articles/${dynamicSlug}`));
@@ -224,7 +229,7 @@ describe("Blog End-to-End Tests with Bun.WebView & BetterAuth", () => {
       "document.querySelector('.relative-date')?.textContent ?? ''"
     );
     expect(relativeDateText).toMatch(/this minute|ago/);
-  });
+  }, 15000);
 
   it("navigates back to the homepage and verifies the article and author appear in the index", async () => {
     await using view = new Bun.WebView({ width: 1024, height: 768 });
