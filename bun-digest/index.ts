@@ -207,7 +207,7 @@ export function createRequestHandler(options: AppServerOptions = {}) {
                 return `<li class="article-item">
                   <div class="article-title-row">
                     <a href="/articles/${escapeHtml(a.slug)}" class="article-title-link">${escapeHtml(a.title)}</a>
-                    <small><a href="/api/articles/${escapeHtml(a.slug)}" target="_blank">JSON</a></small>
+                    <a href="/api/articles/${escapeHtml(a.slug)}" target="_blank" class="json-badge">JSON</a>
                   </div>
                   <div class="article-meta-row">
                     ${authorDisplay}<time>${shortDate}</time>

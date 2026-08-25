@@ -7,37 +7,43 @@
   <title>Bun Digest</title>
 </head>
 <body>
-  <nav class="top-bar">
-    <a href="/" class="brand-title">Bun Digest</a>
-    <div class="auth-status-container" id="authStatusContainer">
-      <!-- AUTH_STATUS_BAR -->
-    </div>
-  </nav>
+  <div class="container">
+    <nav class="top-bar">
+      <a href="/" class="brand-title">
+        <span class="brand-logo-dot"></span>
+        Bun Digest
+      </a>
+      <div class="auth-status-container" id="authStatusContainer">
+        <!-- AUTH_STATUS_BAR -->
+      </div>
+    </nav>
 
-  <header>
-    <h1>Bun Digest</h1>
-    <p>Lightweight native content engine running on Bun 1.4 APIs and BetterAuth.</p>
-  </header>
+    <header class="hero-header">
+      <div class="hero-badge">⚡ Bun 1.4 &bull; Turso &bull; BetterAuth</div>
+      <h1>Modern Native Publishing</h1>
+      <p>High-performance content platform powered by Bun 1.4 native Markdown compiler, Turso LibSQL, and BetterAuth.</p>
+    </header>
 
-  <section class="grid">
-    <div>
-      <h2>Articles List</h2>
-      <ul class="articles-list">
-        <!-- ARTICLES_LIST -->
-      </ul>
-    </div>
+    <main class="grid">
+      <section>
+        <h2 class="section-title">Latest Articles</h2>
+        <ul class="articles-list">
+          <!-- ARTICLES_LIST -->
+        </ul>
+      </section>
 
-    <div class="card">
-      <h2>Publish Markdown Article</h2>
-      <!-- AUTH_FORM_NOTICE -->
-      <form id="postForm">
-        <input id="title" type="text" placeholder="Article Title" required />
-        <input id="slug" type="text" placeholder="slug (e.g., post-one)" required />
-        <textarea id="markdown" placeholder="## Write markdown here..." required></textarea>
-        <button id="submitBtn" type="submit">Submit &amp; Compile</button>
-      </form>
-    </div>
-  </section>
+      <section class="card">
+        <h2 class="section-title">Publish Markdown Article</h2>
+        <!-- AUTH_FORM_NOTICE -->
+        <form id="postForm">
+          <input id="title" type="text" placeholder="Article Title" required />
+          <input id="slug" type="text" placeholder="slug (e.g., post-one)" required />
+          <textarea id="markdown" placeholder="## Write markdown here..." required></textarea>
+          <button id="submitBtn" type="submit">Submit &amp; Compile</button>
+        </form>
+      </section>
+    </main>
+  </div>
 
   <!-- BetterAuth Modal Dialog -->
   <dialog id="authModal" class="auth-dialog">

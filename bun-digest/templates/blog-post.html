@@ -8,27 +8,37 @@
   <title>{{TITLE}}</title>
 </head>
 <body>
-  <header class="post-header">
-    <h1>{{TITLE}}</h1>
-    <div class="post-meta">
-      Published {{AUTHOR_INFO}} on <time datetime="{{ISO_DATE}}">{{FORMATTED_DATE}}</time>
-      <span class="relative-date">({{RELATIVE_DATE}})</span>
-    </div>
-  </header>
-
-  <article class="post-content">
-    {{HTML_CONTENT}}
-  </article>
-
-  <nav class="post-nav" aria-label="Post navigation">
-    <div class="post-nav-links">
-      {{PREV_POST}}
-      {{NEXT_POST}}
-    </div>
-    <div class="post-nav-home">
+  <div class="container post-article-container">
+    <nav class="top-bar">
+      <a href="/" class="brand-title">
+        <span class="brand-logo-dot"></span>
+        Bun Digest
+      </a>
       <a href="/" class="nav-home-link">&larr; Back to Home</a>
-    </div>
-  </nav>
+    </nav>
+
+    <header class="post-header">
+      <h1>{{TITLE}}</h1>
+      <div class="post-meta">
+        Published {{AUTHOR_INFO}} on <time datetime="{{ISO_DATE}}">{{FORMATTED_DATE}}</time>
+        <span class="relative-date">({{RELATIVE_DATE}})</span>
+      </div>
+    </header>
+
+    <article class="post-content">
+      {{HTML_CONTENT}}
+    </article>
+
+    <nav class="post-nav" aria-label="Post navigation">
+      <div class="post-nav-links">
+        {{PREV_POST}}
+        {{NEXT_POST}}
+      </div>
+      <div class="post-nav-home">
+        <a href="/" class="nav-home-link">&larr; Back to Home</a>
+      </div>
+    </nav>
+  </div>
 
   <script>
     document.addEventListener('keydown', (e) => {
