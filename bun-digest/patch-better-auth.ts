@@ -34,3 +34,18 @@ if (existsSync(telemetryPkgPath)) {
     console.warn("[Patch Warning]:", err);
   }
 }
+
+const libsqlPkgPath = "node_modules/@libsql/client/package.json";
+if (existsSync(libsqlPkgPath)) {
+  try {
+    const pkg = JSON.parse(readFileSync(libsqlPkgPath, "utf-8"));
+    if (pkg.exports?.["."]?.import) {
+      pkg.exports["."].import.default = "./lib-esm/web.js";
+      pkg.exports["."].import.node = "./lib-esm/web.js";
+      writeFileSync(libsqlPkgPath, JSON.stringify(pkg, null, 2) + "\n");
+      console.log("[Patch] Pointed @libsql/client to web.js for serverless tracing");
+    }
+  } catch (err) {
+    console.warn("[Patch Warning]:", err);
+  }
+}

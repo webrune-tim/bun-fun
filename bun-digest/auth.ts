@@ -109,7 +109,79 @@ class LibsqlConnection implements DatabaseConnection {
   }
 }
 
+const bunSqliteCache = new Map<string, any>();
+
+function createBunSqliteClient(path: string): Client {
+  const { Database } = require("bun:sqlite");
+  const normalizedPath = path === ":memory:" ? ":memory:" : path.replace(/^file:/, "");
+  let db = bunSqliteCache.get(normalizedPath);
+  if (!db) {
+    db = new Database(normalizedPath);
+    bunSqliteCache.set(normalizedPath, db);
+  }
+  
+  const client: any = {
+    async execute(stmt: any) {
+      const sql = typeof stmt === "string" ? stmt : stmt.sql;
+      const rawArgs = typeof stmt === "string" ? [] : stmt.args || [];
+      const args = Array.isArray(rawArgs) ? rawArgs : Object.values(rawArgs);
+      
+      const trimmed = sql.trim();
+      const isSelect = /^(SELECT|PRAGMA|EXPLAIN)/i.test(trimmed);
+      
+      if (isSelect) {
+        const query = db.query(sql);
+        const rows = query.all(...args);
+        return {
+          rows,
+          columns: rows.length ? Object.keys(rows[0] as object) : [],
+          rowsAffected: 0,
+          lastInsertRowid: undefined,
+        };
+      } else {
+        const res = db.run(sql, args);
+        return {
+          rows: [],
+          columns: [],
+          rowsAffected: res.changes,
+          lastInsertRowid: res.lastInsertRowid !== undefined ? BigInt(res.lastInsertRowid) : undefined,
+        };
+      }
+    },
+    async transaction() {
+      return {
+        async execute(stmt: any) {
+          return client.execute(stmt);
+        },
+        async commit() {},
+        async rollback() {},
+      };
+    },
+    close() {
+      db.close();
+    },
+  };
+  return client as Client;
+}
+
 export function createDbClient(config: { url: string; authToken?: string }): Client {
+  if (
+    config.url.startsWith("libsql:") ||
+    config.url.startsWith("https:") ||
+    config.url.startsWith("http:") ||
+    config.url.startsWith("wss:") ||
+    config.url.startsWith("ws:") ||
+    process.env.VERCEL
+  ) {
+    return createWebClient(config);
+  }
+  if (typeof Bun !== "undefined") {
+    try {
+      return createBunSqliteClient(config.url);
+    } catch {
+      return createWebClient(config);
+    }
+  }
   return createWebClient(config);
 }
 
