@@ -33,6 +33,7 @@ function renderTodoList(items: TodoItem[]): string {
         <span>${escapeHtml(todo.title)}</span>
       </label>
       <button
+        type="button"
         class="btn-danger"
         hx-delete="/api/todos/${todo.id}"
         hx-target="closest li"
@@ -44,6 +45,38 @@ function renderTodoList(items: TodoItem[]): string {
   `
     )
     .join("");
+}
+
+function renderThemeSwitcher(activeTheme: "light" | "dark" | "system" = "system"): string {
+  const themes: { id: "light" | "dark" | "system"; label: string; icon: string }[] = [
+    { id: "light", label: "Light", icon: "☀️" },
+    { id: "dark", label: "Dark", icon: "🌙" },
+    { id: "system", label: "System", icon: "💻" },
+  ];
+
+  return `
+    <fieldset id="theme-selector" class="theme-toggle-group" aria-label="Color theme">
+      ${themes
+        .map(
+          (t) => `
+        <button
+          type="button"
+          aria-pressed="${t.id === activeTheme}"
+          class="theme-btn ${t.id === activeTheme ? "active" : ""}"
+          data-theme-id="${t.id}"
+          onclick="applyTheme('${t.id}')"
+          hx-post="/api/theme?mode=${t.id}"
+          hx-target="#theme-selector"
+          hx-swap="outerHTML"
+        >
+          <span aria-hidden="true">${t.icon}</span>
+          <span>${t.label}</span>
+        </button>
+      `
+        )
+        .join("")}
+    </fieldset>
+  `;
 }
 
 function escapeHtml(str: string): string {
@@ -79,6 +112,16 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       const html = readFileSync(filePath, "utf-8");
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(html);
+      return;
+    }
+  }
+
+  if (pathname === "/styles.css") {
+    const filePath = join(__dirname, "public", "styles.css");
+    if (existsSync(filePath)) {
+      const css = readFileSync(filePath, "utf-8");
+      res.writeHead(200, { "Content-Type": "text/css; charset=utf-8" });
+      res.end(css);
       return;
     }
   }
@@ -195,7 +238,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 
   if (pathname.startsWith("/api/todos/") && pathname.endsWith("/toggle") && method === "PATCH") {
-    const id = parseInt(pathname.split("/")[3], 10);
+    const id = parseInt(pathname.split("/")[3] ?? "", 10);
     const target = todos.find((t) => t.id === id);
     if (target) {
       target.completed = !target.completed;
@@ -206,7 +249,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 
   if (pathname.startsWith("/api/todos/") && method === "DELETE") {
-    const id = parseInt(pathname.split("/")[3], 10);
+    const id = parseInt(pathname.split("/")[3] ?? "", 10);
     todos = todos.filter((t) => t.id !== id);
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     // Empty response deletes the targeted <li> element
@@ -222,6 +265,17 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         <strong>HTTP 422 Unprocessable Content:</strong> In htmx 4.0, error responses are swapped into the target DOM by default!
       </div>
     `);
+    return;
+  }
+
+  // 6. Theme Switching API
+  if (pathname === "/api/theme" && (method === "GET" || method === "POST")) {
+    const mode = (url.searchParams.get("mode") ?? "system") as "light" | "dark" | "system";
+    res.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Set-Cookie": `theme=${mode}; Path=/; SameSite=Lax; Max-Age=31536000`,
+    });
+    res.end(renderThemeSwitcher(mode));
     return;
   }
 

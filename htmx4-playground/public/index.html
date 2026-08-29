@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTMX 4.0 Interactive Playground</title>
+    
+    <!-- htmx 4.0.0 CDN (as specified in https://four.htmx.org/docs) -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@4.0.0"
+      integrity="sha384-BvJpBiO8Kh31EqtJe5DRIeWrHWnCGkwytKs9NKFi86Hhw96dEqdEMzZDeK9iEGTc"
+      crossorigin="anonymous"
+    ></script>
+
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <script>
+      function applyTheme(theme) {
+        if (!theme || theme === "system") {
+          document.documentElement.removeAttribute("data-theme");
+          localStorage.setItem("color-theme", "system");
+        } else {
+          document.documentElement.setAttribute("data-theme", theme);
+          localStorage.setItem("color-theme", theme);
+        }
+      }
+
+      // Initialize theme before render to eliminate FOUC
+      (() => {
+        const theme = localStorage.getItem("color-theme") || "system";
+        if (theme && theme !== "system") {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll(".theme-btn").forEach((btn) => {
+            const isActive = btn.getAttribute("data-theme-id") === theme;
+            btn.classList.toggle("active", isActive);
+            btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+          });
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <div>
+            <h1>HTMX 4.0 Lab <span class="version-badge">v4.0.0</span></h1>
+            <p>A playground demonstrating modern hypermedia architecture, native morphing, and HTMX 4.0 patterns.</p>
+          </div>
+
+          <!-- Theme Switcher powered by HTMX -->
+          <fieldset id="theme-selector" class="theme-toggle-group" aria-label="Color theme">
+            <button
+              type="button"
+              aria-pressed="false"
+              class="theme-btn"
+              data-theme-id="light"
+              onclick="applyTheme('light')"
+              hx-post="/api/theme?mode=light"
+              hx-target="#theme-selector"
+              hx-swap="outerHTML"
+            >
+              <span aria-hidden="true">☀️</span>
+              <span>Light</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed="false"
+              class="theme-btn"
+              data-theme-id="dark"
+              onclick="applyTheme('dark')"
+              hx-post="/api/theme?mode=dark"
+              hx-target="#theme-selector"
+              hx-swap="outerHTML"
+            >
+              <span aria-hidden="true">🌙</span>
+              <span>Dark</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed="true"
+              class="theme-btn active"
+              data-theme-id="system"
+              onclick="applyTheme('system')"
+              hx-post="/api/theme?mode=system"
+              hx-target="#theme-selector"
+              hx-swap="outerHTML"
+            >
+              <span aria-hidden="true">💻</span>
+              <span>System</span>
+            </button>
+          </fieldset>
+        </div>
+      </header>
+
+      <main class="card-grid">
+        <!-- 1. HTMX 4 Method & Action Syntax -->
+        <section class="card">
+          <h2>1. hx-action &amp; hx-method</h2>
+          <p class="card-desc">
+            HTMX 4 introduces form-style <code>hx-action</code> and <code>hx-method</code> alongside shorthand verbs.
+          </p>
+          <div>
+            <button
+              type="button"
+              hx-action="/api/clicked"
+              hx-method="POST"
+              hx-target="#action-output"
+              hx-swap="innerHTML transition:true"
+            >
+              Trigger Action (POST)
+            </button>
+            <span id="click-indicator" class="htmx-indicator">Dispatching request...</span>
+          </div>
+          <div id="action-output"></div>
+        </section>
+
+        <!-- 2. Active Search with Delay & Filter Modifiers -->
+        <section class="card">
+          <h2>2. Active Search &amp; Triggers</h2>
+          <p class="card-desc">
+            Queries the server with <code>delay:300ms</code> debouncing or immediately on <code>Enter</code>.
+          </p>
+          <div class="form-group">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search components or specs..."
+              hx-get="/api/search"
+              hx-trigger="input delay:300ms changed, keyup[key=='Enter']"
+              hx-target="#search-results"
+              hx-indicator="#search-indicator"
+            />
+            <span id="search-indicator" class="htmx-indicator">Searching...</span>
+          </div>
+          <div id="search-results" hx-get="/api/search" hx-trigger="load">
+            <!-- Initial content loaded via load trigger -->
+          </div>
+        </section>
+
+        <!-- 3. Built-in DOM Morphing (Todos) -->
+        <section class="card">
+          <h2>3. Native Morphing Swaps</h2>
+          <p class="card-desc">
+            Uses <code>hx-swap="innerMorph"</code> to reconcile DOM trees in-place, preserving focus and state.
+          </p>
+          <form
+            hx-post="/api/todos"
+            hx-target="#todo-list"
+            hx-swap="innerMorph"
+            hx-on::after-request="if(event.detail.successful) this.reset()"
+            class="form-group"
+          >
+            <input type="text" name="title" placeholder="Add a new task..." required />
+            <button type="submit">Add Task</button>
+          </form>
+          <ul id="todo-list" class="todo-list" hx-get="/api/todos" hx-trigger="load">
+            <!-- Initial list loaded via load trigger -->
+          </ul>
+        </section>
+
+        <!-- 4. Polling & Status Code Swapping -->
+        <section class="card">
+          <h2>4. Polling &amp; 4xx/5xx Default Swaps</h2>
+          <p class="card-desc">
+            Real-time metric polling every 3 seconds, plus default error swapping behavior in HTMX 4.
+          </p>
+          
+          <div
+            id="metrics-container"
+            hx-get="/api/metrics"
+            hx-trigger="load, every 3s"
+            hx-swap="innerHTML"
+          >
+            <p class="card-desc">Polling metrics...</p>
+          </div>
+
+          <div style="margin-top: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem;">
+            <p class="card-desc" style="margin-bottom: 0.5rem;">
+              Test HTMX 4's default 4xx response swapping (previously ignored in 2.x):
+            </p>
+            <button
+              type="button"
+              class="btn"
+              hx-post="/api/trigger-error"
+              hx-target="#error-target"
+            >
+              Simulate 422 Error
+            </button>
+            <div id="error-target"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
