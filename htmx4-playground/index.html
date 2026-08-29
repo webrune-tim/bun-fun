@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTMX 4.0 Interactive Playground</title>
+    
+    <!-- htmx 4.0.0 CDN (as specified in https://four.htmx.org/docs) -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/htmx.org@4.0.0"
+      integrity="sha384-BvJpBiO8Kh31EqtJe5DRIeWrHWnCGkwytKs9NKFi86Hhw96dEqdEMzZDeK9iEGTc"
+      crossorigin="anonymous"
+    ></script>
+
+    <style>
+      :root {
+        --color-bg: oklch(0.98 0.005 240);
+        --color-surface: oklch(1 0 0);
+        --color-surface-hover: oklch(0.96 0.01 240);
+        --color-border: oklch(0.88 0.015 240);
+        --color-text-main: oklch(0.18 0.02 240);
+        --color-text-muted: oklch(0.48 0.02 240);
+        --color-primary: oklch(0.55 0.22 255);
+        --color-primary-hover: oklch(0.48 0.22 255);
+        --color-danger: oklch(0.55 0.22 25);
+        --color-danger-hover: oklch(0.48 0.22 25);
+        --color-success: oklch(0.6 0.18 145);
+        --color-error-bg: oklch(0.95 0.05 25);
+        --color-success-bg: oklch(0.95 0.05 145);
+        
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --shadow-subtle: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
+        --shadow-elevated: 0 4px 12px oklch(0 0 0 / 0.08);
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "Cascadia Code", Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: var(--color-bg);
+        color: var(--color-text-main);
+        line-height: 1.5;
+        padding: 2rem 1rem;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      header {
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 1.5rem;
+      }
+
+      header h1 {
+        font-size: 1.85rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      header p {
+        color: var(--color-text-muted);
+        margin-top: 0.25rem;
+        font-size: 0.95rem;
+      }
+
+      .version-badge {
+        font-size: 0.75rem;
+        background: var(--color-primary);
+        color: #fff;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--radius-sm);
+        vertical-align: middle;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-subtle);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .card h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: 0.5rem;
+      }
+
+      .card-desc {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+      }
+
+      /* Form controls */
+      .form-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-family: inherit;
+        background: var(--color-surface);
+        color: var(--color-text-main);
+        outline: none;
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+      }
+
+      input[type="text"]:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px oklch(0.55 0.22 255 / 0.15);
+      }
+
+      button, .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        background: var(--color-primary);
+        color: #fff;
+        transition: background-color 150ms ease, transform 50ms ease;
+      }
+
+      button:hover, .btn:hover {
+        background: var(--color-primary-hover);
+      }
+
+      button:active, .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-danger {
+        background: var(--color-danger);
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+      }
+
+      .btn-danger:hover {
+        background: var(--color-danger-hover);
+      }
+
+      /* Indicator styles */
+      .htmx-indicator {
+        opacity: 0;
+        transition: opacity 200ms ease;
+        font-size: 0.8rem;
+        color: var(--color-text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .htmx-request .htmx-indicator,
+      .htmx-request.htmx-indicator {
+        opacity: 1;
+      }
+
+      /* Alerts & Status boxes */
+      .alert {
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+
+      .alert.success {
+        background-color: var(--color-success-bg);
+        border: 1px solid var(--color-success);
+        color: oklch(0.3 0.1 145);
+      }
+
+      .alert.error {
+        background-color: var(--color-error-bg);
+        border: 1px solid var(--color-danger);
+        color: oklch(0.3 0.1 25);
+      }
+
+      /* Tables */
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+
+      .data-table th, .data-table td {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .data-table th {
+        color: var(--color-text-muted);
+        font-weight: 600;
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: var(--color-surface-hover);
+        border: 1px solid var(--color-border);
+        padding: 0.15rem 0.4rem;
+        border-radius: var(--radius-sm);
+      }
+
+      /* Todo list */
+      .todo-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .todo-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.75rem;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        transition: opacity 200ms ease, transform 200ms ease;
+      }
+
+      .todo-item.htmx-swapping {
+        opacity: 0;
+        transform: translateX(10px);
+      }
+
+      .todo-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .todo-item.completed span {
+        text-decoration: line-through;
+        color: var(--color-text-muted);
+      }
+
+      /* Metrics Grid */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+      }
+
+      .metric-card {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .metric-label {
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .metric-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        font-family: var(--font-mono);
+      }
+
+      /* View Transitions support */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation-duration: 180ms;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>HTMX 4.0 Lab <span class="version-badge">v4.0.0</span></h1>
+        <p>A playground demonstrating modern hypermedia architecture, native morphing, and HTMX 4.0 patterns.</p>
+      </header>
+
+      <main class="card-grid">
+        <!-- 1. HTMX 4 Method & Action Syntax -->
+        <section class="card">
+          <h2>1. hx-action &amp; hx-method</h2>
+          <p class="card-desc">
+            HTMX 4 introduces form-style <code>hx-action</code> and <code>hx-method</code> alongside shorthand verbs.
+          </p>
+          <div>
+            <button
+              hx-action="/api/clicked"
+              hx-method="POST"
+              hx-target="#action-output"
+              hx-swap="innerHTML transition:true"
+            >
+              Trigger Action (POST)
+            </button>
+            <span id="click-indicator" class="htmx-indicator">Dispatching request...</span>
+          </div>
+          <div id="action-output"></div>
+        </section>
+
+        <!-- 2. Active Search with Delay & Filter Modifiers -->
+        <section class="card">
+          <h2>2. Active Search &amp; Triggers</h2>
+          <p class="card-desc">
+            Queries the server with <code>delay:300ms</code> debouncing or immediately on <code>Enter</code>.
+          </p>
+          <div class="form-group">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search components or specs..."
+              hx-get="/api/search"
+              hx-trigger="input delay:300ms changed, keyup[key=='Enter']"
+              hx-target="#search-results"
+              hx-indicator="#search-indicator"
+            />
+            <span id="search-indicator" class="htmx-indicator">Searching...</span>
+          </div>
+          <div id="search-results" hx-get="/api/search" hx-trigger="load">
+            <!-- Initial content loaded via load trigger -->
+          </div>
+        </section>
+
+        <!-- 3. Built-in DOM Morphing (Todos) -->
+        <section class="card">
+          <h2>3. Native Morphing Swaps</h2>
+          <p class="card-desc">
+            Uses <code>hx-swap="innerMorph"</code> to reconcile DOM trees in-place, preserving focus and state.
+          </p>
+          <form
+            hx-post="/api/todos"
+            hx-target="#todo-list"
+            hx-swap="innerMorph"
+            hx-on::after-request="if(event.detail.successful) this.reset()"
+            class="form-group"
+          >
+            <input type="text" name="title" placeholder="Add a new task..." required />
+            <button type="submit">Add Task</button>
+          </form>
+          <ul id="todo-list" class="todo-list" hx-get="/api/todos" hx-trigger="load">
+            <!-- Initial list loaded via load trigger -->
+          </ul>
+        </section>
+
+        <!-- 4. Polling & Status Code Swapping -->
+        <section class="card">
+          <h2>4. Polling &amp; 4xx/5xx Default Swaps</h2>
+          <p class="card-desc">
+            Real-time metric polling every 3 seconds, plus default error swapping behavior in HTMX 4.
+          </p>
+          
+          <div
+            id="metrics-container"
+            hx-get="/api/metrics"
+            hx-trigger="load, every 3s"
+            hx-swap="innerHTML"
+          >
+            <p class="card-desc">Polling metrics...</p>
+          </div>
+
+          <div style="margin-top: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem;">
+            <p class="card-desc" style="margin-bottom: 0.5rem;">
+              Test HTMX 4's default 4xx response swapping (previously ignored in 2.x):
+            </p>
+            <button
+              class="btn"
+              style="background: var(--color-text-main);"
+              hx-post="/api/trigger-error"
+              hx-target="#error-target"
+            >
+              Simulate 422 Error
+            </button>
+            <div id="error-target"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
