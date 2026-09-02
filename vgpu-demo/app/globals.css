@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07080b;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +12,321 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
+
+/* lil-gui custom modern dark theme */
+.lil-gui {
+  --background-color: rgba(12, 14, 20, 0.85) !important;
+  --text-color: #e2e8f0 !important;
+  --title-background-color: rgba(20, 24, 34, 0.9) !important;
+  --widget-color: rgba(28, 33, 46, 0.8) !important;
+  --hover-color: rgba(45, 52, 72, 0.9) !important;
+  --focus-color: #6366f1 !important;
+  --number-color: #818cf8 !important;
+  --string-color: #34d399 !important;
+  font-family: var(--font-mono, ui-monospace, monospace) !important;
+  font-size: 11px !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6) !important;
+  overflow: hidden !important;
+  z-index: 20 !important;
+}
+
+.lil-gui .title {
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.02em !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ==========================================================================
+   CSS View Transitions (CSS-Tricks Cross-Document Parts 1 & 2)
+   https://css-tricks.com/cross-document-view-transitions-part-1/
+   https://css-tricks.com/cross-document-view-transitions-part-2/
+   ========================================================================== */
+
+/* Modern Opt-In for Cross-Document Transitions (Replaces deprecated meta tag) */
+@view-transition {
+  navigation: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Styling Hooks (view-transition-class)
+   Name = Identity (unique per element)
+   Class = Styling hook (shared across elements via *.class wildcard)
+   -------------------------------------------------------------------------- */
+.vt-persistent {
+  view-transition-name: app-header;
+  view-transition-class: persistent;
+}
+
+.vt-logo {
+  view-transition-name: app-logo;
+  view-transition-class: persistent;
+}
+
+.vt-hero {
+  view-transition-class: hero;
+}
+
+.vt-card {
+  view-transition-class: card;
+}
+
+.vt-title {
+  view-transition-name: demo-title;
+  view-transition-class: title;
+  width: fit-content;
+}
+
+.vt-badge {
+  view-transition-name: demo-badge;
+  view-transition-class: badge;
+  width: fit-content;
+}
+
+/* --------------------------------------------------------------------------
+   Full Animation Suite (Encapsulated in prefers-reduced-motion: no-preference)
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Base View Transition Timing & Easing */
+  ::view-transition-group(root) {
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Default Cross-Fade Keyframes */
+  @keyframes vt-fade-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+  }
+
+  @keyframes vt-fade-in {
+    from {
+      opacity: 0;
+      transform: scale(1.015);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  ::view-transition-old(root) {
+    animation: 0.28s cubic-bezier(0.16, 1, 0.3, 1) both vt-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation: 0.28s cubic-bezier(0.16, 1, 0.3, 1) both vt-fade-in;
+  }
+
+  /* Directional Slide Keyframes */
+  @keyframes vt-slide-to-left {
+    to {
+      transform: translateX(-30%);
+      opacity: 0;
+      filter: blur(4px);
+    }
+  }
+
+  @keyframes vt-slide-from-right {
+    from {
+      transform: translateX(30%);
+      opacity: 0;
+      filter: blur(4px);
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes vt-slide-to-right {
+    to {
+      transform: translateX(30%);
+      opacity: 0;
+      filter: blur(4px);
+    }
+  }
+
+  @keyframes vt-slide-from-left {
+    from {
+      transform: translateX(-30%);
+      opacity: 0;
+      filter: blur(4px);
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  /* Active Transition Type: 'forward' (e.g. Next demo) */
+  html:active-view-transition-type(forward)::view-transition-old(root) {
+    animation: 0.35s cubic-bezier(0.16, 1, 0.3, 1) both vt-slide-to-left;
+  }
+  html:active-view-transition-type(forward)::view-transition-new(root) {
+    animation: 0.35s cubic-bezier(0.16, 1, 0.3, 1) both vt-slide-from-right;
+  }
+
+  /* Active Transition Type: 'backward' (e.g. Previous demo) */
+  html:active-view-transition-type(backward)::view-transition-old(root) {
+    animation: 0.35s cubic-bezier(0.16, 1, 0.3, 1) both vt-slide-to-right;
+  }
+  html:active-view-transition-type(backward)::view-transition-new(root) {
+    animation: 0.35s cubic-bezier(0.16, 1, 0.3, 1) both vt-slide-from-left;
+  }
+
+  /* Contextual Transitions: Zoom Into Demo & Return to Gallery */
+  @keyframes vt-zoom-enter-old {
+    to {
+      opacity: 0;
+      transform: scale(0.94);
+      filter: blur(6px);
+    }
+  }
+
+  @keyframes vt-zoom-enter-new {
+    from {
+      opacity: 0;
+      transform: scale(1.06);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes vt-zoom-exit-old {
+    to {
+      opacity: 0;
+      transform: scale(1.06);
+    }
+  }
+
+  @keyframes vt-zoom-exit-new {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+  }
+
+  /* Active Transition Type: 'demo' */
+  html:active-view-transition-type(demo)::view-transition-old(root) {
+    animation: 0.38s cubic-bezier(0.16, 1, 0.3, 1) both vt-zoom-enter-old;
+  }
+  html:active-view-transition-type(demo)::view-transition-new(root) {
+    animation: 0.38s cubic-bezier(0.16, 1, 0.3, 1) both vt-zoom-enter-new;
+  }
+
+  /* Active Transition Type: 'gallery' */
+  html:active-view-transition-type(gallery)::view-transition-old(root) {
+    animation: 0.38s cubic-bezier(0.16, 1, 0.3, 1) both vt-zoom-exit-old;
+  }
+  html:active-view-transition-type(gallery)::view-transition-new(root) {
+    animation: 0.38s cubic-bezier(0.16, 1, 0.3, 1) both vt-zoom-exit-new;
+  }
+
+  /* ------------------------------------------------------------------------
+     Persistent Landmark Elements (CSS-Tricks Part 2)
+     Zero-duration anchors persistent UI like headers and navigation bars
+     so they feel rock solid while surrounding content transitions.
+     ------------------------------------------------------------------------ */
+  ::view-transition-group(*.persistent) {
+    animation-duration: 0s;
+    z-index: 100;
+  }
+
+  /* ------------------------------------------------------------------------
+     Card & Hero Scaling Rules (*.card, *.hero)
+     Fixes the "Taffy" aspect-ratio warping bug from CSS-Tricks Part 1.
+     ------------------------------------------------------------------------ */
+  ::view-transition-group(*.card),
+  ::view-transition-group(*.hero) {
+    animation-duration: 0.36s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    border-radius: 1.5rem;
+  }
+
+  ::view-transition-old(*.card),
+  ::view-transition-new(*.card),
+  ::view-transition-old(*.hero),
+  ::view-transition-new(*.hero) {
+    /* Crop overflow instead of stretching bitmap bitmaps into taffy */
+    object-fit: cover;
+    overflow: hidden;
+  }
+
+  ::view-transition-old(*.hero) {
+    object-fit: cover;
+    object-position: center center;
+  }
+
+  ::view-transition-new(*.hero) {
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  /* ------------------------------------------------------------------------
+     Title & Badge Morphing
+     Width fit-content prevents font horizontal stretching.
+     ------------------------------------------------------------------------ */
+  ::view-transition-group(*.title) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ::view-transition-old(*.title),
+  ::view-transition-new(*.title) {
+    width: fit-content;
+    height: auto;
+  }
+
+  ::view-transition-group(*.badge) {
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  ::view-transition-old(*.badge),
+  ::view-transition-new(*.badge) {
+    width: fit-content;
+    height: auto;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Accessibility: Prefers Reduced Motion (CSS-Tricks Part 1 & 2)
+   Ensures instantaneous cut with zero animation duration when requested.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation: none !important;
+  }
+}
+
+

@@ -1,9 +1,9 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
-import Link from "next/link";
-import { notFound, useRouter } from "next/navigation";
-import { DEMOS, getDemoById } from "@/app/demos";
+import { notFound } from "next/navigation";
+import { DEMOS } from "@/app/demos";
+import { ColorWheel, TransitionLink, useTransitionRouter } from "@/app/components";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -11,9 +11,8 @@ interface PageProps {
 
 export default function DemoPage({ params }: PageProps) {
   const { id } = use(params);
-  const router = useRouter();
+  const router = useTransitionRouter();
   const [showInfo, setShowInfo] = useState(false);
-  const [webGpuSupported, setWebGpuSupported] = useState<boolean | null>(null);
 
   const demoIndex = DEMOS.findIndex((d) => d.id === id);
   const demo = DEMOS[demoIndex];
@@ -24,21 +23,16 @@ export default function DemoPage({ params }: PageProps) {
 
   const prevDemo = DEMOS[(demoIndex - 1 + DEMOS.length) % DEMOS.length];
   const nextDemo = DEMOS[(demoIndex + 1) % DEMOS.length];
+  const DemoComponent = demo.Component;
 
   useEffect(() => {
-    if (typeof navigator !== "undefined" && "gpu" in navigator) {
-      setWebGpuSupported(true);
-    } else {
-      setWebGpuSupported(false);
-    }
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        router.push("/");
+        router.push("/", { type: "gallery" });
       } else if (e.key === "ArrowLeft" && e.altKey) {
-        router.push(`/demo/${prevDemo.id}`);
+        router.push(`/demo/${prevDemo.id}`, { type: "backward" });
       } else if (e.key === "ArrowRight" && e.altKey) {
-        router.push(`/demo/${nextDemo.id}`);
+        router.push(`/demo/${nextDemo.id}`, { type: "forward" });
       }
     };
 
@@ -51,75 +45,68 @@ export default function DemoPage({ params }: PageProps) {
       suppressHydrationWarning
       className="relative w-screen h-screen overflow-hidden bg-black text-white font-sans flex flex-col select-none"
     >
-      {/* Top Floating Glassmorphic HUD Bar */}
-      <header className="absolute top-0 inset-x-0 z-30 flex items-center justify-between px-4 sm:px-6 py-3.5 bg-gradient-to-b from-black/90 via-black/50 to-transparent backdrop-blur-md border-b border-white/10 pointer-events-auto">
+      {/* Top Navigation Bar */}
+      <header className="h-14 shrink-0 flex items-center justify-between px-4 sm:px-6 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/80 z-30 vt-persistent">
         <div className="flex items-center gap-3 sm:gap-4">
-          <Link
+          <TransitionLink
             href="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-medium text-zinc-200 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/50"
+            transitionType="gallery"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-medium text-zinc-200 transition-all hover:scale-105 active:scale-95 shadow-md shadow-black/50"
             title="Back to Gallery (Esc)"
           >
-            <svg
-              className="w-4 h-4 text-zinc-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
+            <div className="w-5 h-5 rounded-md overflow-hidden relative ring-1 ring-white/20 shrink-0 bg-black vt-logo">
+              <ColorWheel className="w-full h-full" />
+            </div>
             <span className="hidden sm:inline">Gallery</span>
-          </Link>
+          </TransitionLink>
 
-          <div className="h-4 w-px bg-zinc-700/80" />
+          <div className="h-4 w-px bg-zinc-800" />
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-bold text-sm sm:text-base text-white tracking-tight leading-tight">
+              <h1 className="font-bold text-sm sm:text-base text-white tracking-tight leading-tight vt-title">
                 {demo.title}
               </h1>
-              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 vt-badge">
                 {demo.category}
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 hidden sm:block truncate max-w-md">
-              {demo.subtitle}
-            </p>
           </div>
         </div>
 
         {/* Center Hint for Controls */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 border border-white/10 text-xs text-zinc-300 backdrop-blur-md">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 shadow-inner">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
           <span className="font-mono text-[11px]">{demo.controlsHint}</span>
         </div>
 
         {/* Right Controls: Prev/Next and Info Toggle */}
         <div className="flex items-center gap-2">
           {/* Navigation buttons */}
-          <div className="flex items-center bg-zinc-900/80 rounded-xl border border-zinc-700/80 p-0.5">
-            <Link
+          <div className="flex items-center bg-zinc-900 rounded-xl border border-zinc-800 p-0.5">
+            <TransitionLink
               href={`/demo/${prevDemo.id}`}
+              transitionType="backward"
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
               title={`Previous: ${prevDemo.title}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
-            </Link>
-            <span className="text-[11px] font-mono text-zinc-500 px-1">
+            </TransitionLink>
+            <span className="text-[11px] font-mono text-zinc-500 px-1.5">
               {demoIndex + 1}/{DEMOS.length}
             </span>
-            <Link
+            <TransitionLink
               href={`/demo/${nextDemo.id}`}
+              transitionType="forward"
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
               title={`Next: ${nextDemo.title}`}
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
-            </Link>
+            </TransitionLink>
           </div>
 
           {/* Info toggle */}
@@ -128,7 +115,7 @@ export default function DemoPage({ params }: PageProps) {
             className={`px-3 py-1.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-all ${
               showInfo
                 ? "bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/30"
-                : "bg-zinc-900/80 hover:bg-zinc-800 border-zinc-700/80 text-zinc-200"
+                : "bg-zinc-900 hover:bg-zinc-800 border-zinc-700/80 text-zinc-200"
             }`}
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -142,11 +129,11 @@ export default function DemoPage({ params }: PageProps) {
       </header>
 
       {/* Full Viewport Canvas */}
-      <main className="relative flex-1 w-full h-full bg-black overflow-hidden">
-        {demo.component}
+      <main className="relative flex-1 w-full h-full bg-black overflow-hidden vt-hero">
+        <DemoComponent />
 
         {/* Mobile Controls Hint Banner (Bottom) */}
-        <div className="lg:hidden absolute bottom-4 inset-x-4 pointer-events-none flex justify-center">
+        <div className="md:hidden absolute bottom-4 inset-x-4 pointer-events-none flex justify-center z-10">
           <div className="px-3.5 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/10 text-xs font-mono text-zinc-300 text-center shadow-lg">
             {demo.controlsHint}
           </div>
@@ -154,7 +141,7 @@ export default function DemoPage({ params }: PageProps) {
 
         {/* Side Info Panel / Drawer */}
         {showInfo && (
-          <aside className="absolute top-16 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-h-[calc(100vh-6rem)] overflow-y-auto z-40 bg-zinc-950/90 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-200">
+          <aside className="absolute top-4 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 max-h-[calc(100vh-6rem)] overflow-y-auto z-40 bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 rounded-3xl p-6 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-200">
             <div className="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-400">
@@ -164,6 +151,7 @@ export default function DemoPage({ params }: PageProps) {
               </div>
               <button
                 onClick={() => setShowInfo(false)}
+                aria-label="Close shader details"
                 className="p-1 rounded-lg text-zinc-500 hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

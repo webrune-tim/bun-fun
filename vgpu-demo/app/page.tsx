@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { DEMOS, DemoItem, Category } from "@/app/demos";
+import { DEMOS, Category } from "@/app/demos";
+import { ColorWheel, TransitionLink } from "@/app/components";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Category | "all">("all");
-  const [searchQuery, setSearchQuery] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [spotlightId, setSpotlightId] = useState<string>("opt-blackhole");
   const [webGpuSupported, setWebGpuSupported] = useState<boolean | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "spotlight">("grid");
 
   useEffect(() => {
-    setSearchQuery("");
     if (typeof navigator !== "undefined" && "gpu" in navigator) {
       setWebGpuSupported(true);
     } else {
@@ -38,6 +38,7 @@ export default function Home() {
 
   const currentSpotlight =
     DEMOS.find((d) => d.id === spotlightId) || DEMOS[0];
+  const SpotlightComponent = currentSpotlight.Component;
 
   return (
     <div
@@ -54,22 +55,10 @@ export default function Home() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Navigation Bar */}
-        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-8 border-b border-zinc-800/80 mb-10 backdrop-blur-md">
+        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-8 border-b border-zinc-800/80 mb-10 backdrop-blur-md vt-persistent">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
-              <svg
-                className="w-5 h-5 text-white"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                <polyline points="2 17 12 22 22 17" />
-                <polyline points="2 12 12 17 22 12" />
-              </svg>
+            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-purple-500/25 ring-1 ring-white/20 relative bg-black shrink-0 vt-logo">
+              <ColorWheel className="w-full h-full" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -226,8 +215,8 @@ export default function Home() {
         {/* VIEW 1: SPOTLIGHT VIEW */}
         {viewMode === "spotlight" && (
           <div className="flex flex-col gap-6 mb-16">
-            <div className="relative w-full h-[500px] sm:h-[620px] rounded-3xl overflow-hidden border border-zinc-800/80 shadow-2xl bg-black group">
-              {currentSpotlight.component}
+            <div className="relative w-full h-[500px] sm:h-[620px] rounded-3xl overflow-hidden border border-zinc-800/80 shadow-2xl bg-black group vt-hero">
+              <SpotlightComponent />
               
               {/* Overlay Info Bar */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pointer-events-none">
@@ -258,8 +247,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                <Link
+                <TransitionLink
                   href={`/demo/${currentSpotlight.id}`}
+                  transitionType="demo"
                   className="pointer-events-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-indigo-600/30 shrink-0"
                 >
                   <span>Open Full Page</span>
@@ -267,7 +257,7 @@ export default function Home() {
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
                   </svg>
-                </Link>
+                </TransitionLink>
               </div>
             </div>
 
@@ -304,80 +294,85 @@ export default function Home() {
         {/* VIEW 2: RESPONSIVE GRID VIEW */}
         {viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {filteredDemos.map((demo) => (
-              <div
-                key={demo.id}
-                className="group relative flex flex-col rounded-3xl overflow-hidden bg-zinc-950/80 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10"
-              >
-                {/* Canvas Container */}
-                <div className="relative w-full h-[280px] bg-black overflow-hidden border-b border-zinc-800/80">
-                  {demo.component}
-
-                  {/* Interactive Controls Overlay Badge */}
-                  <div className="absolute top-3 left-3 pointer-events-none">
-                    <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-zinc-300 max-w-[200px] truncate block">
-                      {demo.controlsHint}
-                    </span>
-                  </div>
-
-                  {/* Fullscreen Page Link */}
-                  <Link
-                    href={`/demo/${demo.id}`}
-                    className="absolute top-3 right-3 px-2.5 py-1.5 rounded-lg bg-black/70 hover:bg-indigo-600 backdrop-blur-md border border-white/10 text-zinc-200 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-medium shadow-lg hover:scale-105"
-                    title="Open Fullpage Demo"
-                  >
-                    <span>Fullpage</span>
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                    </svg>
-                  </Link>
-                </div>
-
-                {/* Card Info & Details with Clickable Link */}
-                <Link
-                  href={`/demo/${demo.id}`}
-                  className="p-5 flex flex-col flex-1 justify-between gap-3 hover:bg-zinc-900/30 transition-colors"
+            {filteredDemos.map((demo) => {
+              const DemoCardComponent = demo.Component;
+              return (
+                <div
+                  key={demo.id}
+                  className="group relative flex flex-col rounded-3xl overflow-hidden bg-zinc-950/80 border border-zinc-800/80 hover:border-zinc-700 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-indigo-500/10 vt-card"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 font-mono">
-                        {demo.category}
-                      </span>
-                      <span className="text-[10px] text-zinc-500 font-mono flex items-center gap-1 group-hover:text-indigo-300 transition-colors">
-                        View Fullpage →
+                  {/* Canvas Container */}
+                  <div className="relative w-full h-[280px] bg-black overflow-hidden border-b border-zinc-800/80">
+                    <DemoCardComponent />
+
+                    {/* Interactive Controls Overlay Badge */}
+                    <div className="absolute top-3 left-3 pointer-events-none">
+                      <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-zinc-300 max-w-[200px] truncate block">
+                        {demo.controlsHint}
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-200 transition-colors">
-                      {demo.title}
-                    </h3>
-                    <p className="text-xs text-zinc-400 font-medium mb-2 truncate">
-                      {demo.subtitle}
-                    </p>
-                    <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
-                      {demo.description}
-                    </p>
+                    {/* Fullscreen Page Link */}
+                    <TransitionLink
+                      href={`/demo/${demo.id}`}
+                      transitionType="demo"
+                      className="absolute top-3 right-3 px-2.5 py-1.5 rounded-lg bg-black/70 hover:bg-indigo-600 backdrop-blur-md border border-white/10 text-zinc-200 hover:text-white transition-all opacity-0 group-hover:opacity-100 flex items-center gap-1.5 text-xs font-medium shadow-lg hover:scale-105"
+                      title="Open Fullpage Demo"
+                    >
+                      <span>Fullpage</span>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                      </svg>
+                    </TransitionLink>
                   </div>
 
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-1 pt-2">
-                    {demo.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-medium text-zinc-400"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {demo.tags.length > 3 && (
-                      <span className="px-1.5 py-0.5 text-[10px] text-zinc-500 font-mono">
-                        +{demo.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              </div>
-            ))}
+                  {/* Card Info & Details with Clickable Link */}
+                  <TransitionLink
+                    href={`/demo/${demo.id}`}
+                    transitionType="demo"
+                    className="p-5 flex flex-col flex-1 justify-between gap-3 hover:bg-zinc-900/30 transition-colors"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400 font-mono">
+                          {demo.category}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono flex items-center gap-1 group-hover:text-indigo-300 transition-colors">
+                          View Fullpage →
+                        </span>
+                      </div>
+
+                      <h3 className="text-lg font-bold text-white group-hover:text-indigo-200 transition-colors">
+                        {demo.title}
+                      </h3>
+                      <p className="text-xs text-zinc-400 font-medium mb-2 truncate">
+                        {demo.subtitle}
+                      </p>
+                      <p className="text-xs text-zinc-400 leading-relaxed line-clamp-3">
+                        {demo.description}
+                      </p>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-1 pt-2">
+                      {demo.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-medium text-zinc-400"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {demo.tags.length > 3 && (
+                        <span className="px-1.5 py-0.5 text-[10px] text-zinc-500 font-mono">
+                          +{demo.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </TransitionLink>
+                </div>
+              );
+            })}
           </div>
         )}
 
