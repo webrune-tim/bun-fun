@@ -1,7 +1,7 @@
 {
   "name": "vgpu-demo",
   "version": "0.3.1",
-  "private": true,
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -31,7 +31,7 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": "12.0.2",
+      "version": ">=11.0.0",
       "onFail": "download"
     }
   }
